@@ -38,7 +38,7 @@ declare module "minecraft-launcher-core" {
      */
     clientPackage?: string;
     /**
-     * if true MCLC will remove the client package zip file after its finished extracting.
+     * if true PiMi will remove the client package zip file after its finished extracting.
      */
     removePackage?: boolean;
     /**
@@ -52,12 +52,12 @@ declare module "minecraft-launcher-core" {
     root: string;
     /**
      * OS override for minecraft natives
-     * 
+     *
      * @default will autodetect
      */
     os?: OS;
     /**
-     * Array of custom Minecraft arguments. 
+     * Array of custom Minecraft arguments.
      */
     customLaunchArgs?: Array<string>;
     /**
@@ -73,19 +73,19 @@ declare module "minecraft-launcher-core" {
      */
     version: {
       /**
-       * Actual version. 
-       * 
+       * Actual version.
+       *
        * @example '1.16.4'
        */
       number: string;
       /**
        * type of release, usually `release` or `snapshot`
        */
-      type: 'release' | 'snapshot' | string;
+      type: "release" | "snapshot" | string;
       /**
-       * 	The name of the folder, jar file, and version json in the version folder. 
-       * 
-       * ` MCLC will look in the `versions` folder for this name
+       * 	The name of the folder, jar file, and version json in the version folder.
+       *
+       * ` PiMi will look in the `versions` folder for this name
        * @example '1.16.4-fabric'
        */
       custom?: string;
@@ -101,8 +101,8 @@ declare module "minecraft-launcher-core" {
       min: string | number;
     };
     /**
-     * Path to Forge Jar. 
-     * 
+     * Path to Forge Jar.
+     *
      * Versions below 1.13 should be the "universal" jar while versions above 1.13+ should be the "installer" jar
      */
     forge?: string;
@@ -117,7 +117,7 @@ declare module "minecraft-launcher-core" {
       host: string;
       /**
        * Port of the host url
-       * 
+       *
        * @default 25565
        */
       port?: string;
@@ -129,7 +129,7 @@ declare module "minecraft-launcher-core" {
       host: string;
       /**
        *  Username for the proxy.
-       * 
+       *
        * @default 8080
        */
       port?: string;
@@ -152,7 +152,7 @@ declare module "minecraft-launcher-core" {
       fullscreen?: boolean;
     };
     quickPlay?: {
-      type: 'singleplayer' | 'multiplayer' | 'realms' | 'legacy';
+      type: "singleplayer" | "multiplayer" | "realms" | "legacy";
       identifier: string;
       path?: string;
     };
@@ -171,8 +171,8 @@ declare module "minecraft-launcher-core" {
     name: string;
     user_properties: Partial<any>;
     meta?: {
-      type: "mojang" | "msa",
-      demo?: boolean
+      type: "mojang" | "msa";
+      demo?: boolean;
     };
   }
 
@@ -188,7 +188,7 @@ declare module "minecraft-launcher-core" {
      */
     getAuth(username: string, password?: string): Promise<IUser>;
     /**
-     * 
+     *
      * @param access_token Token being checked if it can be used to login with (online mode)
      * @param client_token Client token being checked to see if there was a change of client (online mode)
      */
@@ -197,16 +197,13 @@ declare module "minecraft-launcher-core" {
       client_token: string
     ): Promise<boolean | Partial<any>>;
     /**
-     * 
+     *
      * @param access_token Token being checked if it can be used to login with (online mode)
      * @param client_token Client token being checked to see if there was a change of client (online mode)
      */
-    refreshAuth(
-      access_token: string,
-      client_token: string,
-    ): Promise<IUser>;
+    refreshAuth(access_token: string, client_token: string): Promise<IUser>;
     /**
-     * 
+     *
      * @param access_token Token being checked if it can be used to login with (online mode)
      * @param client_token Client token being checked to see if there was a change of client (online mode)
      */
@@ -215,9 +212,9 @@ declare module "minecraft-launcher-core" {
       client_token: string
     ): Promise<boolean | Partial<any>>;
     /**
-      * @param username email if using a password, else the username
-      * @param password password for mojang account
-      */
+     * @param username email if using a password, else the username
+     * @param password password for mojang account
+     */
     signOut(
       username: string,
       password: string
@@ -225,17 +222,21 @@ declare module "minecraft-launcher-core" {
     changeApiUrl(url: string): void;
   }
 
-  import { EventEmitter } from 'events'
-  import { ChildProcessWithoutNullStreams } from 'child_process'
+  import { EventEmitter } from "events";
+  import { ChildProcessWithoutNullStreams } from "child_process";
 
   export class Client extends EventEmitter {
-    launch(options: ILauncherOptions): Promise<ChildProcessWithoutNullStreams | null>;
+    launch(
+      options: ILauncherOptions
+    ): Promise<ChildProcessWithoutNullStreams | null>;
     protected printVersion(): void;
     protected createRootDirectory(): void;
     protected createGameDirectory(): void;
     protected extractPackage(): Promise<void>;
     protected getModifyJson(): Promise<any>;
-    protected startMinecraft(launchArguments: string[]): ChildProcessWithoutNullStreams;
+    protected startMinecraft(
+      launchArguments: string[]
+    ): ChildProcessWithoutNullStreams;
   }
 
   export const Authenticator: IAuthenticator;

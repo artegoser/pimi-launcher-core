@@ -1,42 +1,42 @@
-const request = require('request')
-const { v3 } = require('uuid')
+const request = require("request");
+const { v3 } = require("uuid");
 
-let uuid
-let api_url = 'https://authserver.mojang.com'
+let uuid;
+let api_url = "https://authserver.mojang.com";
 
 module.exports.getAuth = function (username, password, client_token = null) {
   return new Promise((resolve, reject) => {
-    getUUID(username)
+    getUUID(username);
     if (!password) {
       const user = {
         access_token: uuid,
         client_token: client_token || uuid,
         uuid,
         name: username,
-        user_properties: '{}'
-      }
+        user_properties: "{}",
+      };
 
-      return resolve(user)
+      return resolve(user);
     }
 
     const requestObject = {
-      url: api_url + '/authenticate',
+      url: api_url + "/authenticate",
       json: {
         agent: {
-          name: 'Minecraft',
-          version: 1
+          name: "Minecraft",
+          version: 1,
         },
         username,
         password,
         clientToken: uuid,
-        requestUser: true
-      }
-    }
+        requestUser: true,
+      },
+    };
 
     request.post(requestObject, function (error, response, body) {
-      if (error) return reject(error)
+      if (error) return reject(error);
       if (!body || !body.selectedProfile) {
-        return reject(new Error('Validation error: ' + response.statusMessage))
+        return reject(new Error("Validation error: " + response.statusMessage));
       }
 
       const userProfile = {
@@ -45,48 +45,48 @@ module.exports.getAuth = function (username, password, client_token = null) {
         uuid: body.selectedProfile.id,
         name: body.selectedProfile.name,
         selected_profile: body.selectedProfile,
-        user_properties: parsePropts(body.user.properties)
-      }
+        user_properties: parsePropts(body.user.properties),
+      };
 
-      resolve(userProfile)
-    })
-  })
-}
+      resolve(userProfile);
+    });
+  });
+};
 
 module.exports.validate = function (accessToken, clientToken) {
   return new Promise((resolve, reject) => {
     const requestObject = {
-      url: api_url + '/validate',
+      url: api_url + "/validate",
       json: {
         accessToken,
-        clientToken
-      }
-    }
+        clientToken,
+      },
+    };
 
     request.post(requestObject, async function (error, response, body) {
-      if (error) return reject(error)
+      if (error) return reject(error);
 
-      if (!body) resolve(true)
-      else reject(body)
-    })
-  })
-}
+      if (!body) resolve(true);
+      else reject(body);
+    });
+  });
+};
 
 module.exports.refreshAuth = function (accessToken, clientToken) {
   return new Promise((resolve, reject) => {
     const requestObject = {
-      url: api_url + '/refresh',
+      url: api_url + "/refresh",
       json: {
         accessToken,
         clientToken,
-        requestUser: true
-      }
-    }
+        requestUser: true,
+      },
+    };
 
     request.post(requestObject, function (error, response, body) {
-      if (error) return reject(error)
+      if (error) return reject(error);
       if (!body || !body.selectedProfile) {
-        return reject(new Error('Validation error: ' + response.statusMessage))
+        return reject(new Error("Validation error: " + response.statusMessage));
       }
 
       const userProfile = {
@@ -94,75 +94,75 @@ module.exports.refreshAuth = function (accessToken, clientToken) {
         client_token: getUUID(body.selectedProfile.name),
         uuid: body.selectedProfile.id,
         name: body.selectedProfile.name,
-        user_properties: parsePropts(body.user.properties)
-      }
+        user_properties: parsePropts(body.user.properties),
+      };
 
-      return resolve(userProfile)
-    })
-  })
-}
+      return resolve(userProfile);
+    });
+  });
+};
 
 module.exports.invalidate = function (accessToken, clientToken) {
   return new Promise((resolve, reject) => {
     const requestObject = {
-      url: api_url + '/invalidate',
+      url: api_url + "/invalidate",
       json: {
         accessToken,
-        clientToken
-      }
-    }
+        clientToken,
+      },
+    };
 
     request.post(requestObject, function (error, response, body) {
-      if (error) return reject(error)
+      if (error) return reject(error);
 
-      if (!body) return resolve(true)
-      else return reject(body)
-    })
-  })
-}
+      if (!body) return resolve(true);
+      else return reject(body);
+    });
+  });
+};
 
 module.exports.signOut = function (username, password) {
   return new Promise((resolve, reject) => {
     const requestObject = {
-      url: api_url + '/signout',
+      url: api_url + "/signout",
       json: {
         username,
-        password
-      }
-    }
+        password,
+      },
+    };
 
     request.post(requestObject, function (error, response, body) {
-      if (error) return reject(error)
+      if (error) return reject(error);
 
-      if (!body) return resolve(true)
-      else return reject(body)
-    })
-  })
-}
+      if (!body) return resolve(true);
+      else return reject(body);
+    });
+  });
+};
 
 module.exports.changeApiUrl = function (url) {
-  api_url = url
-}
+  api_url = url;
+};
 
-function parsePropts (array) {
+function parsePropts(array) {
   if (array) {
-    const newObj = {}
+    const newObj = {};
     for (const entry of array) {
       if (newObj[entry.name]) {
-        newObj[entry.name].push(entry.value)
+        newObj[entry.name].push(entry.value);
       } else {
-        newObj[entry.name] = [entry.value]
+        newObj[entry.name] = [entry.value];
       }
     }
-    return JSON.stringify(newObj)
+    return JSON.stringify(newObj);
   } else {
-    return '{}'
+    return "{}";
   }
 }
 
-function getUUID (value) {
+function getUUID(value) {
   if (!uuid) {
-    uuid = v3(value, v3.DNS)
+    uuid = v3(value, v3.DNS);
   }
-  return uuid
+  return uuid;
 }
