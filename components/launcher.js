@@ -35,7 +35,7 @@ class MCLCore extends EventEmitter {
 
       this.handler = new Handler(this)
 
-      this.printVersion()
+      this._printVersion()
 
       const java = await this.handler.checkJava(this.options.javaPath || 'java')
       if (!java.run) {
@@ -44,10 +44,10 @@ class MCLCore extends EventEmitter {
         return null
       }
 
-      this.createRootDirectory()
-      this.createGameDirectory()
+      this._createRootDirectory()
+      this._createGameDirectory()
 
-      await this.extractPackage()
+      await this._extractPackage()
 
       if (this.options.installer) {
         // So installers that create a profile in launcher_profiles.json can run without breaking.
@@ -77,7 +77,7 @@ class MCLCore extends EventEmitter {
         await this.handler.getJar()
       }
 
-      const modifyJson = await this.getModifyJson()
+      const modifyJson = await this._getModifyJson()
 
       const args = []
 
@@ -146,21 +146,21 @@ class MCLCore extends EventEmitter {
     }
   }
 
-  printVersion () {
+  _printVersion () {
     if (fs.existsSync(path.join(__dirname, '..', 'package.json'))) {
       const { version } = require('../package.json')
       this.emit('debug', `[MCLC]: MCLC version ${version}`)
     } else { this.emit('debug', '[MCLC]: Package JSON not found, skipping MCLC version check.') }
   }
 
-  createRootDirectory () {
+  _createRootDirectory () {
     if (!fs.existsSync(this.options.root)) {
       this.emit('debug', '[MCLC]: Attempting to create root folder')
       fs.mkdirSync(this.options.root)
     }
   }
 
-  createGameDirectory () {
+  _createGameDirectory () {
     if (this.options.overrides.gameDirectory) {
       this.options.overrides.gameDirectory = path.resolve(this.options.overrides.gameDirectory)
       if (!fs.existsSync(this.options.overrides.gameDirectory)) {
@@ -169,14 +169,14 @@ class MCLCore extends EventEmitter {
     }
   }
 
-  async extractPackage () {
+  async _extractPackage () {
     if (this.options.clientPackage) {
       this.emit('debug', `[MCLC]: Extracting client package to ${this.options.root}`)
       await this.handler.extractPackage()
     }
   }
 
-  async getModifyJson () {
+  async _getModifyJson () {
     let modifyJson = null
 
     if (this.options.forge) {
