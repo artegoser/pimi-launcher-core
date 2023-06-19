@@ -697,74 +697,49 @@ class Handler {
     });
   }
 
-  async downloadToDirectory(directory, libraries, eventName) {
-    const libs = [];
+  async downloadToDirectory (directory, libraries, eventName) {
+    const libs = []
 
-    await Promise.all(
-      libraries.map(async (library) => {
-        if (!library) return;
-        if (this.parseRule(library)) return;
-        const lib = library.name.split(":");
+    await Promise.all(libraries.map(async library => {
+      if (!library) return
+      if (this.parseRule(library)) return
+      const lib = library.name.split(':')
 
-        let jarPath;
-        let name;
-        if (
-          library.downloads &&
-          library.downloads.artifact &&
-          library.downloads.artifact.path
-        ) {
-          name =
-            library.downloads.artifact.path.split("/")[
-              library.downloads.artifact.path.split("/").length - 1
-            ];
-          jarPath = path.join(
-            directory,
-            this.popString(library.downloads.artifact.path)
-          );
-        } else {
-          name = `${lib[1]}-${lib[2]}${lib[3] ? "-" + lib[3] : ""}.jar`;
-          jarPath = path.join(
-            directory,
-            `${lib[0].replace(/\./g, "/")}/${lib[1]}/${lib[2]}`
-          );
+      let jarPath
+      let name
+      if (library.downloads && library.downloads.artifact && library.downloads.artifact.path) {
+        name = library.downloads.artifact.path.split('/')[library.downloads.artifact.path.split('/').length - 1]
+        jarPath = path.join(directory, this.popString(library.downloads.artifact.path))
+      } else {
+        name = `${lib[1]}-${lib[2]}${lib[3] ? '-' + lib[3] : ''}.jar`
+        jarPath = path.join(directory, `${lib[0].replace(/\./g, '/')}/${lib[1]}/${lib[2]}`)
+      }
+
+      const downloadLibrary = async library => {
+        if (library.url) {
+          const url = `${library.url}${lib[0].replace(/\./g, '/')}/${lib[1]}/${lib[2]}/${name}`
+          await this.downloadAsync(url, jarPath, name, true, eventName)
+        } else if (library.downloads && library.downloads.artifact) {
+          await this.downloadAsync(library.downloads.artifact.url, jarPath, name, true, eventName)
         }
+      }
 
-        if (
-          !fs.existsSync(path.join(jarPath, name)) ||
-          !this.checkSum(
-            library.downloads.artifact.sha1,
-            path.join(jarPath, name)
-          )
-        ) {
-          // Simple lib support, forgot which addon needed this but here you go, Mr special.
-          if (library.url) {
-            const url = `${library.url}${lib[0].replace(/\./g, "/")}/${
-              lib[1]
-            }/${lib[2]}/${name}`;
-            await this.downloadAsync(url, jarPath, name, true, eventName);
-          } else if (library.downloads && library.downloads.artifact) {
-            await this.downloadAsync(
-              library.downloads.artifact.url,
-              jarPath,
-              name,
-              true,
-              eventName
-            );
-          }
-        }
+      if (!fs.existsSync(path.join(jarPath, name))) downloadLibrary(library)
+      else if (library.downloads && library.downloads.artifact) {
+        if (!this.checkSum(library.downloads.artifact.sha1, path.join(jarPath, name))) downloadLibrary(library)
+      }
 
-        counter++;
-        this.client.emit("progress", {
-          type: eventName,
-          task: counter,
-          total: libraries.length,
-        });
-        libs.push(`${jarPath}${path.sep}${name}`);
+      counter++
+      this.client.emit('progress', {
+        type: eventName,
+        task: counter,
+        total: libraries.length
       })
-    );
-    counter = 0;
+      libs.push(`${jarPath}${path.sep}${name}`)
+    }))
+    counter = 0
 
-    return libs;
+    return libs
   }
 
   async getClasses(classJson) {
