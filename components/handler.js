@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-const request = require("request");
 const checksum = require("checksum");
 const Zip = require("adm-zip");
 const child = require("child_process");
@@ -136,7 +135,7 @@ class Handler {
   }
 
   getVersion() {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       const versionJsonPath =
         this.options.overrides.versionJson ||
         path.join(
@@ -152,73 +151,77 @@ class Handler {
       const cache = this.options.cache
         ? `${this.options.cache}/json`
         : `${this.options.root}/cache/json`;
-      request.get(manifest, (error, response, body) => {
-        if (error && error.code !== "ENOTFOUND") return resolve(error);
-        if (!error) {
-          if (!fs.existsSync(cache)) {
-            fs.mkdirSync(cache, { recursive: true });
-            this.client.emit("debug", "[PiMi]: Cache directory created.");
-          }
-          fs.writeFile(
-            path.join(`${cache}/version_manifest.json`),
-            body,
-            (err) => {
-              if (err) return resolve(err);
-              this.client.emit("debug", "[PiMi]: Cached version_manifest.json");
-            }
-          );
-        }
 
-        let parsed;
-        if (error && error.code === "ENOTFOUND") {
+      let parsed;
+      try {
+        let response = await axios.get(manifest);
+
+        if (!fs.existsSync(cache)) {
+          fs.mkdirSync(cache, { recursive: true });
+          this.client.emit("debug", "[PiMi]: Cache directory created.");
+        }
+        fs.writeFile(
+          path.join(`${cache}/version_manifest.json`),
+          JSON.stringify(response.data),
+          (err) => {
+            if (err) return resolve(err);
+            this.client.emit("debug", "[PiMi]: Cached version_manifest.json");
+          }
+        );
+
+        parsed = response.data;
+      } catch (error) {
+        if (error.code !== "ENOTFOUND") {
+          return resolve(error);
+        } else {
           parsed = JSON.parse(
             fs.readFileSync(`${cache}/version_manifest.json`)
           );
-        } else {
-          parsed = JSON.parse(body);
         }
+      }
 
-        for (const desiredVersion in parsed.versions) {
-          if (
-            parsed.versions[desiredVersion].id === this.options.version.number
-          ) {
-            request.get(
-              parsed.versions[desiredVersion].url,
-              (error, response, body) => {
-                if (error && error.code !== "ENOTFOUND") return resolve(error);
-                if (!error) {
-                  fs.writeFile(
-                    path.join(`${cache}/${this.options.version.number}.json`),
-                    body,
-                    (err) => {
-                      if (err) return resolve(err);
-                      this.client.emit(
-                        "debug",
-                        `[PiMi]: Cached ${this.options.version.number}.json`
-                      );
-                    }
-                  );
-                }
+      for (const desiredVersion in parsed.versions) {
+        if (
+          parsed.versions[desiredVersion].id === this.options.version.number
+        ) {
+          try {
+            let response = await axios.get(parsed.versions[desiredVersion].url);
 
+            fs.writeFile(
+              path.join(`${cache}/${this.options.version.number}.json`),
+              JSON.stringify(response.data),
+              (err) => {
+                if (err) return resolve(err);
                 this.client.emit(
                   "debug",
-                  "[PiMi]: Parsed version from version manifest"
+                  `[PiMi]: Cached ${this.options.version.number}.json`
                 );
-                if (error && error.code === "ENOTFOUND") {
-                  this.version = JSON.parse(
-                    fs.readFileSync(
-                      `${cache}/${this.options.version.number}.json`
-                    )
-                  );
-                } else {
-                  this.version = JSON.parse(body);
-                }
-                return resolve(this.version);
               }
             );
+
+            this.client.emit(
+              "debug",
+              "[PiMi]: Parsed version from version manifest"
+            );
+
+            this.version = response.data;
+          } catch (error) {
+            if (error.code !== "ENOTFOUND") return resolve(error);
+            else {
+              this.client.emit(
+                "debug",
+                "[PiMi]: Parsed version from version manifest"
+              );
+
+              this.version = JSON.parse(
+                fs.readFileSync(`${cache}/${this.options.version.number}.json`)
+              );
+            }
           }
+
+          return resolve(this.version);
         }
-      });
+      }
     });
   }
 
