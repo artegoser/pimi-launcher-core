@@ -4,15 +4,21 @@ const request = require("request");
 const checksum = require("checksum");
 const Zip = require("adm-zip");
 const child = require("child_process");
+const axios = require("axios");
+const { Agent } = require("https");
+
 let counter = 0;
 
 class Handler {
   constructor(client) {
     this.client = client;
     this.options = client.options;
-    this.baseRequest = request.defaults({
-      pool: { maxSockets: this.options.overrides.maxSockets || 2 },
+
+    this.baseRequest = axios.create({
       timeout: this.options.timeout || 10000,
+      httpsAgent: new Agent({
+        maxSockets: 8,
+      }),
     });
   }
 
@@ -40,10 +46,14 @@ class Handler {
   }
 
   downloadAsync(url, directory, name, retry, type) {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       fs.mkdirSync(directory, { recursive: true });
 
-      const _request = this.baseRequest(url);
+      const _request = (
+        await this.baseRequest.get(url, {
+          responseType: "stream",
+        })
+      ).data;
 
       let receivedBytes = 0;
       let totalBytes = 0;
@@ -636,17 +646,19 @@ class Handler {
           }/${name}`;
           // Checking if the file still exists on Forge's server, if not, replace it with the fallback.
           // Not checking for sucess, only if it 404s.
-          this.baseRequest(downloadLink, (error, response, body) => {
-            if (error) {
-              this.client.emit(
-                "debug",
-                `[PiMi]: Failed checking request for ${downloadLink}`
-              );
-            } else {
-              if (response.statusCode === 404)
+          try {
+            await this.baseRequest.get(downloadLink);
+          } catch (error) {
+            if (error.response) {
+              if (error.response.status === 404)
                 library.url = this.options.overrides.url.fallbackMaven;
+              else
+                this.client.emit(
+                  "debug",
+                  `[PiMi]: Failed checking request for ${downloadLink}`
+                );
             }
-          });
+          }
         })
       );
     }
