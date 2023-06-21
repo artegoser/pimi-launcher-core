@@ -8,7 +8,6 @@
     "adm-zip": "^0.4.13",
     "axios": "^1.4.0",
     "checksum": "^0.1.1",
-    "request": "^2.88.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

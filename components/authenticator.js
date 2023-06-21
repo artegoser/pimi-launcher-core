@@ -1,6 +1,5 @@
-const request = require("request");
 const { v3 } = require("uuid");
-
+const axios = require("axios");
 let uuid;
 let api_url = "https://authserver.mojang.com";
 
@@ -33,23 +32,25 @@ module.exports.getAuth = function (username, password, client_token = null) {
       },
     };
 
-    request.post(requestObject, function (error, response, body) {
-      if (error) return reject(error);
-      if (!body || !body.selectedProfile) {
-        return reject(new Error("Validation error: " + response.statusMessage));
-      }
+    axios
+      .post(requestObject.url, requestObject.json)
+      .then((response) => {
+        const body = response.data;
 
-      const userProfile = {
-        access_token: body.accessToken,
-        client_token: body.clientToken,
-        uuid: body.selectedProfile.id,
-        name: body.selectedProfile.name,
-        selected_profile: body.selectedProfile,
-        user_properties: parsePropts(body.user.properties),
-      };
+        const userProfile = {
+          access_token: body.accessToken,
+          client_token: body.clientToken,
+          uuid: body.selectedProfile.id,
+          name: body.selectedProfile.name,
+          selected_profile: body.selectedProfile,
+          user_properties: parsePropts(body.user.properties),
+        };
 
-      resolve(userProfile);
-    });
+        resolve(userProfile);
+      })
+      .catch((error) => {
+        return reject(error);
+      });
   });
 };
 
@@ -63,12 +64,15 @@ module.exports.validate = function (accessToken, clientToken) {
       },
     };
 
-    request.post(requestObject, async function (error, response, body) {
-      if (error) return reject(error);
-
-      if (!body) resolve(true);
-      else reject(body);
-    });
+    axios
+      .post(requestObject.url, requestObject.json)
+      .then((response) => {
+        if (!response.data) resolve(true);
+        else reject(response.data);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
@@ -83,22 +87,23 @@ module.exports.refreshAuth = function (accessToken, clientToken) {
       },
     };
 
-    request.post(requestObject, function (error, response, body) {
-      if (error) return reject(error);
-      if (!body || !body.selectedProfile) {
-        return reject(new Error("Validation error: " + response.statusMessage));
-      }
+    axios
+      .post(requestObject.url, requestObject.json)
+      .then((response) => {
+        const body = response.data;
+        const userProfile = {
+          access_token: body.accessToken,
+          client_token: getUUID(body.selectedProfile.name),
+          uuid: body.selectedProfile.id,
+          name: body.selectedProfile.name,
+          user_properties: parsePropts(body.user.properties),
+        };
 
-      const userProfile = {
-        access_token: body.accessToken,
-        client_token: getUUID(body.selectedProfile.name),
-        uuid: body.selectedProfile.id,
-        name: body.selectedProfile.name,
-        user_properties: parsePropts(body.user.properties),
-      };
-
-      return resolve(userProfile);
-    });
+        return resolve(userProfile);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
@@ -112,12 +117,15 @@ module.exports.invalidate = function (accessToken, clientToken) {
       },
     };
 
-    request.post(requestObject, function (error, response, body) {
-      if (error) return reject(error);
-
-      if (!body) return resolve(true);
-      else return reject(body);
-    });
+    axios
+      .post(requestObject.url, requestObject.json)
+      .then((response) => {
+        if (!response.data) return resolve(true);
+        else return reject(response.data);
+      })
+      .catch((error) => {
+        return reject(error);
+      });
   });
 };
 
@@ -131,12 +139,15 @@ module.exports.signOut = function (username, password) {
       },
     };
 
-    request.post(requestObject, function (error, response, body) {
-      if (error) return reject(error);
-
-      if (!body) return resolve(true);
-      else return reject(body);
-    });
+    axios
+      .post(requestObject.url, requestObject.json)
+      .then((response) => {
+        if (!response.data) return resolve(true);
+        else return reject(response.data);
+      })
+      .catch((error) => {
+        return reject(error);
+      });
   });
 };
 
