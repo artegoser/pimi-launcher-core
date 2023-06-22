@@ -4,7 +4,7 @@
 
 [![Build Status](https://travis-ci.com/Pierce01/MinecraftLauncher-core.svg?branch=master)](https://travis-ci.com/Pierce01/MinecraftLauncher-core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![version](https://img.shields.io/badge/stable_version-3.17.1-blue)
+![version](https://img.shields.io/badge/stable_version-1.2.1-blue)
 ![badge](https://img.shields.io/badge/ncurses-not_supported-purple)
 
 PiMi (Minecraft Launcher Core) is a NodeJS solution for launching modded and vanilla Minecraft without having to download and format everything yourself.
@@ -222,6 +222,15 @@ PiMi's authenticator module does not support Microsoft authentication. You will 
 | `download-status` | Object  | Emitted when data is received while downloading                                     |
 | `debug`           | String  | Emitted when functions occur, made to help debug if errors occur                    |
 | `progress`        | Object  | Emitted when files are being downloaded in order. (Assets, Forge, Natives, Classes) |
+
+#### Utils functions
+
+| Function Name       | Type   | Description                                                            |
+| ------------------- | ------ | ---------------------------------------------------------------------- |
+| `getVersions`       | String | Returns all versions of the Minecraft                                  |
+| `getLatestVersion`  | String | Returns the latest version number of the Minecraft.                    |
+| `getLatestRelease`  | String | Returns the latest Minecraft version release number                    |
+| `getLatestSnapshot` | String | Returns the latest Minecraft snapshot version number of the Minecraft. |
 
 #### What should it look like running from console?
 
